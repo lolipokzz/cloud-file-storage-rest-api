@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: 'postgres:latest'
+    environment:
+      - 'POSTGRES_DB=CloudFileStorage'
+      - 'POSTGRES_PASSWORD=postgres'
+      - 'POSTGRES_USER=1234'
+    ports:
+      - '5433:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+  minio:
+    image: 'minio/minio:latest'
+    environment:
+      - 'MINIO_ROOT_USER=minio_user'
+      - 'MINIO_ROOT_PASSWORD=minio_password'
+      - 'MINIO_ADDRESS=:9000'
+      - 'MINIO_CONSOLE_ADDRESS=:9001'
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio_data:/data
+    command: minio server /data
+
+  backend:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/CloudFileStorage
+      SPRING_DATASOURCE_USERNAME: 1234
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+    depends_on:
+      - postgres
+      - minio
+
+  frontend:
+    image: cloud-frontend:1
+    ports:
+      - "80:80"
+
+volumes:
+  db-data:
+  minio_data:
