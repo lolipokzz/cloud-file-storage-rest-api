@@ -22,7 +22,6 @@ services:
     volumes:
       - minio_data:/data
     command: minio server /data
-
   backend:
     build: .
     ports:
@@ -31,15 +30,17 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/CloudFileStorage
       SPRING_DATASOURCE_USERNAME: 1234
       SPRING_DATASOURCE_PASSWORD: postgres
-
     depends_on:
       - postgres
       - minio
+
 
   frontend:
     image: cloud-frontend:1
     ports:
       - "80:80"
+    depends_on:
+      - backend
 
 volumes:
   db-data:
