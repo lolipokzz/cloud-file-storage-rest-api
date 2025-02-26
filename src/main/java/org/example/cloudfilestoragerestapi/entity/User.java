@@ -3,6 +3,8 @@ package org.example.cloudfilestoragerestapi.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
+
 @Entity
 @NoArgsConstructor
 @Getter
@@ -10,7 +12,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @Table(name="users")
-public class User {
+public class User implements Serializable {
 
 
     @Id

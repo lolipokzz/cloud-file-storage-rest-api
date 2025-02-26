@@ -4,12 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.example.cloudfilestoragerestapi.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
 
 @RequiredArgsConstructor
-public class UserDetailsImpl implements UserDetails {
+public class UserDetailsImpl implements UserDetails, Serializable {
 
     private final User user;
 
