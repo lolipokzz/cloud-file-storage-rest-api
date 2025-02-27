@@ -1,10 +1,11 @@
-package org.example.cloudfilestoragerestapi.exception;
+package org.example.cloudfilestoragerestapi.handler;
 
 
-import jakarta.validation.ConstraintViolationException;
 import org.example.cloudfilestoragerestapi.dto.response.ErrorResponseDto;
+import org.example.cloudfilestoragerestapi.exception.UserAlreadyExistsException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -18,9 +19,9 @@ public class GlobalExceptionHandler {
     }
 
 
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ErrorResponseDto> handleMethodArgumentNotValidException(ConstraintViolationException e) {
-        ErrorResponseDto errorResponseDto = ErrorResponseDto.builder().message(e.getMessage()).build();
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponseDto> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        ErrorResponseDto errorResponseDto = ErrorResponseDto.builder().message("Validation error").build();
         return ResponseEntity.status(400).body(errorResponseDto);
     }
 
@@ -28,6 +29,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleAuthenticationException(AuthenticationException e) {
         return ResponseEntity.status(401).body(ErrorResponseDto.builder().message("Invalid username or password").build());
     }
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleException(Exception e) {

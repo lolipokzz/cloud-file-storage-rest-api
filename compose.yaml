@@ -33,7 +33,7 @@ services:
     depends_on:
       - postgres
       - minio
-
+      - redis
 
   frontend:
     image: cloud-frontend:1
@@ -42,6 +42,15 @@ services:
     depends_on:
       - backend
 
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
 volumes:
   db-data:
   minio_data:
+  redis_data:
