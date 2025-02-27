@@ -11,7 +11,7 @@ import java.io.Serializable;
 @Setter
 @AllArgsConstructor
 @Builder
-@Table(name="users")
+@Table(name = "users")
 public class User implements Serializable {
 
 
