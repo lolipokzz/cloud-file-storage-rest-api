@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -24,7 +26,8 @@ public class DirectoryController {
     @GetMapping
     public ResponseEntity<List<ResourceResponseDto>> getDirectoryInfo(@RequestParam("path") String path, @AuthenticationPrincipal UserDetailsImpl userDetails) {
         int userId = userDetails.getUser().getId();
-        List<ResourceResponseDto> resourceResponseDtos = directoryService.getDirectoryInfo(path, userId);
+        String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8);
+        List<ResourceResponseDto> resourceResponseDtos = directoryService.getDirectoryInfo(decodedPath, userId);
         return ResponseEntity.ok(resourceResponseDtos);
     }
 }
