@@ -27,7 +27,7 @@ public class DirectoryController {
     public ResponseEntity<List<ResourceResponseDto>> getDirectoryInfo(@RequestParam("path") String path, @AuthenticationPrincipal UserDetailsImpl userDetails) {
         int userId = userDetails.getUser().getId();
         String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8);
-        List<ResourceResponseDto> resourceResponseDtos = directoryService.getDirectoryInfo(decodedPath, userId);
+        List<ResourceResponseDto> resourceResponseDtos = directoryService.getDirectoryResources(decodedPath, userId);
         return ResponseEntity.ok(resourceResponseDtos);
     }
 }
