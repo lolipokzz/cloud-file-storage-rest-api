@@ -41,4 +41,15 @@ public class ResourceNamingUtil {
         return resourceName.substring(0,startIndex + 1);
     }
 
+    public static String getUserRootFolder(int userId) {
+        return "user-" + userId + "-files/";
+    }
+
+
+    public static String getFilePathInDirectory(String fullPath, String directoryPath) {
+        String dirName = getResourceNameWithoutPath(directoryPath);
+        int startIndex = fullPath.indexOf(dirName);
+        return fullPath.substring(startIndex - 1);
+    }
+
 }

@@ -16,8 +16,6 @@ import static org.example.cloudfilestoragerestapi.util.ResourceNamingUtil.getRes
 @RequiredArgsConstructor
 public class ResourceService {
 
-    private final MinioClient minioClient;
-
     private final DirectoryService directoryService;
 
     private final FileService fileService;
@@ -49,7 +47,6 @@ public class ResourceService {
         } else {
             return directoryService.getDirectoryAsStream(userId,path);
         }
-
     }
 
 }
