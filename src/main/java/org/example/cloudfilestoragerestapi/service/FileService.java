@@ -20,7 +20,6 @@ public class FileService {
     private final MinioService minioService;
 
 
-
     public void deleteFile(int userId, String path) {
         if (path.contains("/")) {
             String pathToFile = getResourcePathWithoutName(path);
@@ -45,4 +44,19 @@ public class FileService {
     public InputStream getFileAsStream(int userId, String path) {
         return minioService.getObject(getUserRootFolder(userId) + path);
     }
+
+
+    public ResourceResponseDto moveFile(int userId, String fromPath, String toPath) {
+        minioService.copyObject(getUserRootFolder(userId)+fromPath,getUserRootFolder(userId)+toPath);
+        minioService.removeObject(getUserRootFolder(userId) + fromPath);
+        StatObjectResponse objectStat = minioService.getObjectStat(getUserRootFolder(userId) + toPath);
+        return ResourceResponseDto.builder()
+                .path(toPath)
+                .name(getResourceNameWithoutPath(toPath))
+                .type("FILE")
+                .size(objectStat.size())
+                .build();
+    }
+
+
 }

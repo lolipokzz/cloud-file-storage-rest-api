@@ -30,54 +30,52 @@ public class DirectoryService {
     private final MinioService minioService;
 
 
-
     @Value("${EMPTY_FILE}")
     private String emptyFile;
 
 
     public List<ResourceResponseDto> getDirectoryResources(String path, int userId) {
-            List<Item> allFiles = minioService.getItemsFromMinio(userId, path);
+        List<Item> allFiles = minioService.getItemsFromMinio(userId, path);
 
-            if (allFiles.isEmpty()) {
-                throw new ResourceNotFoundException("Resource not found");
+        if (allFiles.isEmpty()) {
+            throw new ResourceNotFoundException("Resource not found");
+        }
+
+        List<ResourceResponseDto> resourceResponseDtos = new ArrayList<>();
+
+        for (Item item : allFiles) {
+
+            if (getResourceNameWithoutPath(item.objectName()).equals(emptyFile)) {
+                continue;
             }
 
-            List<ResourceResponseDto> resourceResponseDtos = new ArrayList<>();
-
-            for (Item item : allFiles) {
-
-                if (getResourceNameWithoutPath(item.objectName()).equals(emptyFile)){
-                    continue;
-                }
-
-                if (item.isDir()) {
-                    resourceResponseDtos.add(ResourceResponseDto.builder()
-                            .name(getResourceNameWithoutPath(item.objectName()))
-                            .path(path)
-                            .size(item.size())
-                            .type("DIRECTORY")
-                            .build());
-                } else {
-                    resourceResponseDtos.add(ResourceResponseDto.builder()
-                            .name(getResourceNameWithoutPath(item.objectName()))
-                            .path(path)
-                            .size(item.size())
-                            .type("FILE")
-                            .build());
-                }
+            if (item.isDir()) {
+                resourceResponseDtos.add(ResourceResponseDto.builder()
+                        .name(getResourceNameWithoutPath(item.objectName()))
+                        .path(path)
+                        .size(item.size())
+                        .type("DIRECTORY")
+                        .build());
+            } else {
+                resourceResponseDtos.add(ResourceResponseDto.builder()
+                        .name(getResourceNameWithoutPath(item.objectName()))
+                        .path(path)
+                        .size(item.size())
+                        .type("FILE")
+                        .build());
             }
-            return resourceResponseDtos;
+        }
+        return resourceResponseDtos;
     }
 
 
     public void deleteDirectory(int userId, String path) {
-        List<Item> allFiles = minioService.getItemsFromMinioRecursively(userId,path);
+        List<Item> allFiles = minioService.getItemsFromMinioRecursively(userId, path);
         for (Item item : allFiles) {
             minioService.removeObject(item.objectName());
 
         }
     }
-
 
 
     public ResourceResponseDto getDirectoryInfo(int userId, String path) {
@@ -95,45 +93,57 @@ public class DirectoryService {
     }
 
 
-public InputStream getDirectoryAsStream(int userId, String path) {
+    public InputStream getDirectoryAsStream(int userId, String path) {
 
-    List<Item> allFiles = minioService.getItemsFromMinioRecursively(userId, path);
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        List<Item> allFiles = minioService.getItemsFromMinioRecursively(userId, path);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
 
-    try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
 
-        for (Item item : allFiles) {
+            for (Item item : allFiles) {
 
-            String fileInDir = getResourceNameWithoutPath(item.objectName());
-            String pathInDir = getFilePathInDirectory(item.objectName(),path);
+                String fileInDir = getResourceNameWithoutPath(item.objectName());
+                String pathInDir = getFilePathInDirectory(item.objectName(), path);
 
-            if (fileInDir.equals(emptyFile)) {
-                throw new ResourceNotFoundException("Nothing to download");
+                if (fileInDir.equals(emptyFile)) {
+                    throw new ResourceNotFoundException("Nothing to download");
+                }
+
+
+                try (InputStream inputStream = minioService.getObject(item.objectName())) {
+
+                    ZipEntry zipEntry = new ZipEntry(pathInDir);
+                    zipOutputStream.putNextEntry(zipEntry);
+                    IOUtils.copy(inputStream, zipOutputStream);
+                    zipOutputStream.closeEntry();
+
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to process object: " + item.objectName(), e);
+                }
             }
 
-
-            try (InputStream inputStream = minioService.getObject(item.objectName())) {
-
-                ZipEntry zipEntry = new ZipEntry(pathInDir);
-                zipOutputStream.putNextEntry(zipEntry);
-                IOUtils.copy(inputStream, zipOutputStream);
-                zipOutputStream.closeEntry();
-
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to process object: " + item.objectName(), e);
-            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create ZIP archive", e);
         }
 
-    } catch (IOException e) {
-        throw new RuntimeException("Failed to create ZIP archive", e);
+        return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
     }
 
-    return new ByteArrayInputStream(byteArrayOutputStream .toByteArray());
-}
-
-
-
-
+    public ResourceResponseDto moveDirectory(int userId, String fromPath, String toPath) {
+        List<Item> allFiles = minioService.getItemsFromMinioRecursively(userId, fromPath);
+        for (Item item : allFiles) {
+            String targetPath =getUserRootFolder(userId)+toPath +getResourceNameWithoutPath(item.objectName());
+            minioService.copyObject(item.objectName(), targetPath);
+            minioService.removeObject(item.objectName());
+        }
+        return ResourceResponseDto
+                .builder()
+                .type("DIRECTORY")
+                .name(getResourceNameWithoutPath(toPath))
+                .path(getResourcePathWithoutName(fromPath))
+                .size(0)
+                .build();
+    }
 
 }

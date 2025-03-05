@@ -49,4 +49,13 @@ public class ResourceService {
         }
     }
 
+    public  ResourceResponseDto moveResource(int userId, String fromPath, String toPath) {
+        String resourceType = getResourceTypeByName(toPath);
+        if (resourceType.equals("FILE")) {
+            return fileService.moveFile(userId, fromPath, toPath);
+        }else {
+            return directoryService.moveDirectory(userId, fromPath, toPath);
+        }
+    }
+
 }

@@ -64,9 +64,19 @@ public class ResourceController {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        return null;
+            return ResponseEntity.status(200).build();
     }
+
+
+    @GetMapping("/move")
+    public ResponseEntity<ResourceResponseDto> moveResource(@AuthenticationPrincipal UserDetailsImpl userDetails,@RequestParam("from") String from,@RequestParam("to") String to) {
+        String decodedFrom = URLDecoder.decode(from, StandardCharsets.UTF_8);
+        String decodedTo = URLDecoder.decode(to, StandardCharsets.UTF_8);
+        int userId = userDetails.getUser().getId();
+        ResourceResponseDto resourceResponseDto = resourceService.moveResource(userId, decodedFrom, decodedTo);
+        return ResponseEntity.status(200).body(resourceResponseDto);
+    }
+
 
 
 }
