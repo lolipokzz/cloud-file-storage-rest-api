@@ -161,4 +161,13 @@ public class DirectoryService {
                 .build();
     }
 
+
+    public ResourceResponseDto createDirectory(int userId, String path) {
+        String fullPath = getUserRootFolder(userId)+path;
+        minioService.putEmptyObject(fullPath);
+        return ResourceResponseDto.builder().path(getResourcePathWithoutName(path)).name(getResourceNameWithoutPath(path)).size(0).type("DIRECTORY").build();
+    }
+
+
+
 }
