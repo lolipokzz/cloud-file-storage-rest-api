@@ -35,7 +35,7 @@ public class FileService {
         return ResourceResponseDto.builder()
                 .name(getResourceNameWithoutPath(path))
                 .size(objectStat.size())
-                .path(path)
+                .path(getResourcePathWithoutName(path)  )
                 .type("FILE")
                 .build();
     }
@@ -52,7 +52,7 @@ public class FileService {
         StatObjectResponse objectStat = minioService.getObjectStat(getUserRootFolder(userId) + toPath);
         return ResourceResponseDto.builder()
                 .path(toPath)
-                .name(getResourceNameWithoutPath(toPath))
+                .name(getResourceNameWithoutPath(fromPath))
                 .type("FILE")
                 .size(objectStat.size())
                 .build();

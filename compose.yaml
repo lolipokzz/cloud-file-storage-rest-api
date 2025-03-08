@@ -26,10 +26,6 @@ services:
     build: .
     ports:
       - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/CloudFileStorage
-      SPRING_DATASOURCE_USERNAME: 1234
-      SPRING_DATASOURCE_PASSWORD: postgres
     depends_on:
       - postgres
       - minio

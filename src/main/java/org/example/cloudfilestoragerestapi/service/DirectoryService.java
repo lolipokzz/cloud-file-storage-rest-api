@@ -87,7 +87,7 @@ public class DirectoryService {
 
         return ResourceResponseDto.builder()
                 .type("DIRECTORY")
-                .path(path)
+                .path(getResourcePathWithoutName(path))
                 .name(getResourceNameWithoutPath(path))
                 .size(0).build();
     }
@@ -130,10 +130,25 @@ public class DirectoryService {
         return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
     }
 
+
+    //TODO почистить это говно
     public ResourceResponseDto moveDirectory(int userId, String fromPath, String toPath) {
         List<Item> allFiles = minioService.getItemsFromMinioRecursively(userId, fromPath);
         for (Item item : allFiles) {
-            String targetPath =getUserRootFolder(userId)+toPath +getResourceNameWithoutPath(item.objectName());
+            String fileInDir = getFilePathInDirectory2(item.objectName(),fromPath);
+            int index=0;
+            for (int i = 0; i < fileInDir.length()-1; i++) {
+                if (fileInDir.charAt(i) == '/') {
+                    index +=1;
+                }
+                if (index==2){
+                    fileInDir = fileInDir.substring(i+1);
+                    break;
+                }
+            }
+
+
+            String targetPath =getUserRootFolder(userId)+toPath+fileInDir;
             minioService.copyObject(item.objectName(), targetPath);
             minioService.removeObject(item.objectName());
         }

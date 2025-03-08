@@ -31,7 +31,8 @@ public class ResourceController {
     @GetMapping
     public ResponseEntity<ResourceResponseDto> getResourceInfo(@RequestParam(value = "path") String path, @AuthenticationPrincipal UserDetailsImpl userDetails) {
         int userId = userDetails.getUser().getId();
-        ResourceResponseDto resourceResponseDto = resourceService.getResourceByPath(userId, path);
+        String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8);
+        ResourceResponseDto resourceResponseDto = resourceService.getResourceByPath(userId, decodedPath);
         return ResponseEntity.status(201).body(resourceResponseDto);
     }
 
@@ -44,11 +45,11 @@ public class ResourceController {
     }
 
     @PostMapping
-    public ResponseEntity<List<ResourceResponseDto>> uploadResource(@RequestParam(value = "file") MultipartFile file, @RequestParam("path") String path) {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    public ResponseEntity<List<ResourceResponseDto>> uploadResource(@RequestPart(value = "object") List<MultipartFile> file, @RequestParam("path") String path,@AuthenticationPrincipal UserDetailsImpl userDetails) {
         int userId = userDetails.getUser().getId();
-
-        return null;
+        String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8);
+        List<ResourceResponseDto> resourceResponseDtos = resourceService.uploadResource(userId,decodedPath, file);
+        return ResponseEntity.status(201).body(resourceResponseDtos);
     }
 
     @GetMapping("/download")
@@ -64,12 +65,12 @@ public class ResourceController {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-            return ResponseEntity.status(200).build();
+        return ResponseEntity.status(200).build();
     }
 
 
     @GetMapping("/move")
-    public ResponseEntity<ResourceResponseDto> moveResource(@AuthenticationPrincipal UserDetailsImpl userDetails,@RequestParam("from") String from,@RequestParam("to") String to) {
+    public ResponseEntity<ResourceResponseDto> moveResource(@AuthenticationPrincipal UserDetailsImpl userDetails, @RequestParam("from") String from, @RequestParam("to") String to) {
         String decodedFrom = URLDecoder.decode(from, StandardCharsets.UTF_8);
         String decodedTo = URLDecoder.decode(to, StandardCharsets.UTF_8);
         int userId = userDetails.getUser().getId();
@@ -78,5 +79,12 @@ public class ResourceController {
     }
 
 
+    @GetMapping("/search")
+    public ResponseEntity<List<ResourceResponseDto>> findResources(@RequestParam("query") String query, @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        String decodedQuery = URLDecoder.decode(query, StandardCharsets.UTF_8);
+        int userId = userDetails.getUser().getId();
+        List<ResourceResponseDto> resourceResponseDtos = resourceService.getResourceList(userId, decodedQuery);
+        return ResponseEntity.status(200).body(resourceResponseDtos);
+    }
 
 }

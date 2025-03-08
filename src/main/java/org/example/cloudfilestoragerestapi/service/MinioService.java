@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.cloudfilestoragerestapi.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -107,6 +108,34 @@ public class MinioService {
         }
     }
 
+    public void copyObject(String sourcePath, String targetPath){
+        try {
+            minioClient.copyObject(
+                    CopyObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(targetPath)
+                            .source(
+                                    CopySource.builder()
+                                            .bucket(bucketName)
+                                            .object(sourcePath)
+                                            .build())
+                            .build());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
+    public void putObject(String path, int userId, MultipartFile file){
+        try {
+            minioClient.putObject(PutObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(getUserRootFolder(userId)+ path)
+                    .stream(file.getInputStream(), file.getSize(), -1)
+                    .build());
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 }

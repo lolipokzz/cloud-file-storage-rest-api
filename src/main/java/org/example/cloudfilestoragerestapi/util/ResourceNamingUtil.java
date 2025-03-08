@@ -46,10 +46,25 @@ public class ResourceNamingUtil {
     }
 
 
-    public static String getFilePathInDirectory(String fullPath, String directoryPath) {
-        String dirName = getResourceNameWithoutPath(directoryPath);
-        int startIndex = fullPath.indexOf(dirName);
-        return fullPath.substring(startIndex - 1);
+    public static String getFilePathInDirectory(String fullPathToFile, String pathToDirectory) {
+        String dirName = getResourceNameWithoutPath(pathToDirectory);
+        int startIndex = fullPathToFile.indexOf(dirName);
+        return fullPathToFile.substring(startIndex);
+    }
+
+    public static String getResourcePathWithoutRootFolder(String fullPathToFile) {
+        for (int i = 0; i < fullPathToFile.length()-1; i++) {
+            if (fullPathToFile.charAt(i) == '/') {
+                return fullPathToFile.substring(i+1);
+            }
+        }
+        return fullPathToFile;
+    }
+
+    public static String getFilePathInDirectory2(String fullPathToFile, String pathToDirectory) {
+        String dirName = getResourceNameWithoutPath(pathToDirectory);
+        int startIndex = fullPathToFile.indexOf(dirName);
+        return fullPathToFile.substring(startIndex-1);
     }
 
 }
