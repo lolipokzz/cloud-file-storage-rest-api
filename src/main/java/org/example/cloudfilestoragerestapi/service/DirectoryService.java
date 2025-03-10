@@ -1,25 +1,22 @@
 package org.example.cloudfilestoragerestapi.service;
 
 
-import io.minio.*;
-import io.minio.errors.MinioException;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.example.cloudfilestoragerestapi.dto.response.ResourceResponseDto;
 import org.example.cloudfilestoragerestapi.exception.ResourceNotFoundException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static org.example.cloudfilestoragerestapi.util.ItemUtil.getItemsFromResult;
 import static org.example.cloudfilestoragerestapi.util.ResourceNamingUtil.*;
 
 @Service
@@ -29,9 +26,6 @@ public class DirectoryService {
 
     private final MinioService minioService;
 
-
-    @Value("${EMPTY_FILE}")
-    private String emptyFile;
 
 
     public List<ResourceResponseDto> getDirectoryResources(String path, int userId) {
@@ -45,7 +39,7 @@ public class DirectoryService {
 
         for (Item item : allFiles) {
 
-            if (getResourceNameWithoutPath(item.objectName()).equals(emptyFile)) {
+            if (item.objectName().equals(getUserRootFolder(userId)+path)) {
                 continue;
             }
 
@@ -103,12 +97,7 @@ public class DirectoryService {
 
             for (Item item : allFiles) {
 
-                String fileInDir = getResourceNameWithoutPath(item.objectName());
                 String pathInDir = getFilePathInDirectory(item.objectName(), path);
-
-                if (fileInDir.equals(emptyFile)) {
-                    throw new ResourceNotFoundException("Nothing to download");
-                }
 
 
                 try (InputStream inputStream = minioService.getObject(item.objectName())) {
@@ -135,20 +124,20 @@ public class DirectoryService {
     public ResourceResponseDto moveDirectory(int userId, String fromPath, String toPath) {
         List<Item> allFiles = minioService.getItemsFromMinioRecursively(userId, fromPath);
         for (Item item : allFiles) {
-            String fileInDir = getFilePathInDirectory2(item.objectName(),fromPath);
-            int index=0;
-            for (int i = 0; i < fileInDir.length()-1; i++) {
+            String fileInDir = getFilePathInDirectory2(item.objectName(), fromPath);
+            int index = 0;
+            for (int i = 0; i < fileInDir.length() - 1; i++) {
                 if (fileInDir.charAt(i) == '/') {
-                    index +=1;
+                    index += 1;
                 }
-                if (index==2){
-                    fileInDir = fileInDir.substring(i+1);
+                if (index == 2) {
+                    fileInDir = fileInDir.substring(i + 1);
                     break;
                 }
             }
 
 
-            String targetPath =getUserRootFolder(userId)+toPath+fileInDir;
+            String targetPath = getUserRootFolder(userId) + toPath + fileInDir;
             minioService.copyObject(item.objectName(), targetPath);
             minioService.removeObject(item.objectName());
         }
@@ -163,11 +152,15 @@ public class DirectoryService {
 
 
     public ResourceResponseDto createDirectory(int userId, String path) {
-        String fullPath = getUserRootFolder(userId)+path;
+        String fullPath = getUserRootFolder(userId) + path;
         minioService.putEmptyObject(fullPath);
-        return ResourceResponseDto.builder().path(getResourcePathWithoutName(path)).name(getResourceNameWithoutPath(path)).size(0).type("DIRECTORY").build();
+        return ResourceResponseDto.builder()
+                .path(getResourcePathWithoutName(path))
+                .name(getResourceNameWithoutPath(path))
+                .size(0)
+                .type("DIRECTORY")
+                .build();
     }
-
 
 
 }
