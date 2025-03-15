@@ -5,7 +5,10 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.IOUtils;
 import org.example.cloudfilestoragerestapi.dto.response.ResourceResponseDto;
+import org.example.cloudfilestoragerestapi.exception.DirectoryAlreadyExists;
+import org.example.cloudfilestoragerestapi.exception.DirectoryDoesNotExistException;
 import org.example.cloudfilestoragerestapi.exception.ResourceNotFoundException;
+import org.example.cloudfilestoragerestapi.util.ResourceNamingUtil;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
@@ -17,8 +20,6 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static org.example.cloudfilestoragerestapi.util.ResourceNamingUtil.*;
-
 @Service
 @RequiredArgsConstructor
 public class DirectoryService {
@@ -26,33 +27,34 @@ public class DirectoryService {
 
     private final MinioService minioService;
 
+    private final ResourceNamingUtil resourceNamingUtil;
 
 
     public List<ResourceResponseDto> getDirectoryResources(String path, int userId) {
         List<Item> allFiles = minioService.getItemsFromMinio(userId, path);
 
         if (allFiles.isEmpty()) {
-            throw new ResourceNotFoundException("Resource not found");
+            throw new DirectoryDoesNotExistException("Directory not found");
         }
 
         List<ResourceResponseDto> resourceResponseDtos = new ArrayList<>();
 
         for (Item item : allFiles) {
 
-            if (item.objectName().equals(getUserRootFolder(userId)+path)) {
+            if (item.objectName().equals(resourceNamingUtil.getUserRootFolder(userId) + path)) {
                 continue;
             }
 
             if (item.isDir()) {
                 resourceResponseDtos.add(ResourceResponseDto.builder()
-                        .name(getResourceNameWithoutPath(item.objectName()))
+                        .name(resourceNamingUtil.getFileNameWithoutPath(item.objectName()))
                         .path(path)
                         .size(item.size())
                         .type("DIRECTORY")
                         .build());
             } else {
                 resourceResponseDtos.add(ResourceResponseDto.builder()
-                        .name(getResourceNameWithoutPath(item.objectName()))
+                        .name(resourceNamingUtil.getFileNameWithoutPath(item.objectName()))
                         .path(path)
                         .size(item.size())
                         .type("FILE")
@@ -79,10 +81,11 @@ public class DirectoryService {
             throw new ResourceNotFoundException("Directory not found: " + path);
         }
 
+
         return ResourceResponseDto.builder()
                 .type("DIRECTORY")
-                .path(getResourcePathWithoutName(path))
-                .name(getResourceNameWithoutPath(path))
+                .path(resourceNamingUtil.getDirectoryPathWithoutName(path))
+                .name(resourceNamingUtil.getFileNameWithoutPath(path))
                 .size(0).build();
     }
 
@@ -97,7 +100,7 @@ public class DirectoryService {
 
             for (Item item : allFiles) {
 
-                String pathInDir = getFilePathInDirectory(item.objectName(), path);
+                String pathInDir = resourceNamingUtil.getFilePathInDirectory(item.objectName(), path);
 
 
                 try (InputStream inputStream = minioService.getObject(item.objectName())) {
@@ -124,7 +127,7 @@ public class DirectoryService {
     public ResourceResponseDto moveDirectory(int userId, String fromPath, String toPath) {
         List<Item> allFiles = minioService.getItemsFromMinioRecursively(userId, fromPath);
         for (Item item : allFiles) {
-            String fileInDir = getFilePathInDirectory2(item.objectName(), fromPath);
+            String fileInDir = resourceNamingUtil.getFilePathInDirectory2(item.objectName(), fromPath);
             int index = 0;
             for (int i = 0; i < fileInDir.length() - 1; i++) {
                 if (fileInDir.charAt(i) == '/') {
@@ -137,26 +140,41 @@ public class DirectoryService {
             }
 
 
-            String targetPath = getUserRootFolder(userId) + toPath + fileInDir;
+            String targetPath = resourceNamingUtil.getUserRootFolder(userId) + toPath + fileInDir;
             minioService.copyObject(item.objectName(), targetPath);
             minioService.removeObject(item.objectName());
         }
         return ResourceResponseDto
                 .builder()
                 .type("DIRECTORY")
-                .name(getResourceNameWithoutPath(toPath))
-                .path(getResourcePathWithoutName(fromPath))
+                .name(resourceNamingUtil.getFileNameWithoutPath(toPath))
+                .path(resourceNamingUtil.getResourcePathWithoutName(fromPath))
                 .size(0)
                 .build();
     }
 
 
     public ResourceResponseDto createDirectory(int userId, String path) {
-        String fullPath = getUserRootFolder(userId) + path;
+
+        if (!resourceNamingUtil.isRootDirectory(path)) {
+            List<Item> allFiles = minioService.getItemsFromMinio(userId, resourceNamingUtil.getDirectoryPathWithoutName(path));
+            if (allFiles.isEmpty()) {
+                throw new ResourceNotFoundException("Directory not found: " + resourceNamingUtil.getDirectoryPathWithoutName(path));
+            }
+
+
+            ResourceResponseDto resourceResponseDto = getDirectoryInfo(userId, path);
+            if (resourceNamingUtil.getDirectoryNameWithoutPath(path).equals(resourceResponseDto.getName())) {
+                throw new DirectoryAlreadyExists("Directory already exists");
+            }
+        }
+
+
+        String fullPath = resourceNamingUtil.getUserRootFolder(userId) + path;
         minioService.putEmptyObject(fullPath);
         return ResourceResponseDto.builder()
-                .path(getResourcePathWithoutName(path))
-                .name(getResourceNameWithoutPath(path))
+                .path(resourceNamingUtil.getDirectoryPathWithoutName(path))
+                .name(resourceNamingUtil.getDirectoryNameWithoutPath(path))
                 .size(0)
                 .type("DIRECTORY")
                 .build();
