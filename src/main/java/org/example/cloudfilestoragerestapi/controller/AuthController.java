@@ -6,7 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudfilestoragerestapi.dto.request.NewUserRequestDto;
 import org.example.cloudfilestoragerestapi.dto.request.UserLoginRequestDto;
-import org.example.cloudfilestoragerestapi.dto.response.ErrorResponseDto;
+import org.example.cloudfilestoragerestapi.dto.response.MessageResponseDto;
 import org.example.cloudfilestoragerestapi.dto.response.UserResponseDto;
 import org.example.cloudfilestoragerestapi.security.UserDetailsImpl;
 import org.example.cloudfilestoragerestapi.service.AuthService;
@@ -37,7 +37,7 @@ public class AuthController {
     @PostMapping("/sign-up")
     public ResponseEntity<?> signUp(@RequestBody @Valid NewUserRequestDto newUserRequestDto, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
-            return ResponseEntity.status(400).body(ErrorResponseDto.builder().message(Objects.requireNonNull(bindingResult.getFieldError()).getDefaultMessage()).build());
+            return ResponseEntity.status(400).body(MessageResponseDto.builder().message(Objects.requireNonNull(bindingResult.getFieldError()).getDefaultMessage()).build());
         }
 
         UserResponseDto userResponseDto = authService.saveNewUser(newUserRequestDto);

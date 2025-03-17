@@ -5,11 +5,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.IOUtils;
 import org.example.cloudfilestoragerestapi.dto.response.ResourceResponseDto;
+import org.example.cloudfilestoragerestapi.exception.UploadException;
 import org.example.cloudfilestoragerestapi.security.UserDetailsImpl;
 import org.example.cloudfilestoragerestapi.service.ResourceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -41,14 +41,18 @@ public class ResourceController {
         int userId = userDetails.getUser().getId();
         String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8);
         resourceService.deleteResource(userId, decodedPath);
-        return ResponseEntity.status(204).build();
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping
-    public ResponseEntity<List<ResourceResponseDto>> uploadResource(@RequestPart(value = "object") List<MultipartFile> file, @RequestParam("path") String path,@AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<List<ResourceResponseDto>> uploadResource(@RequestPart(value = "object") List<MultipartFile> file, @RequestParam("path") String path, @AuthenticationPrincipal UserDetailsImpl userDetails) {
         int userId = userDetails.getUser().getId();
         String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8);
-        List<ResourceResponseDto> resourceResponseDtos = resourceService.uploadResource(userId,decodedPath, file);
+
+        if (file.isEmpty()) {
+            throw new UploadException("File is empty");
+        }
+        List<ResourceResponseDto> resourceResponseDtos = resourceService.uploadResource(userId, decodedPath, file);
         return ResponseEntity.status(201).body(resourceResponseDtos);
     }
 

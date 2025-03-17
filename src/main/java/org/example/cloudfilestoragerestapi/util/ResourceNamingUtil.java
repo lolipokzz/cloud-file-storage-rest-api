@@ -1,18 +1,19 @@
 package org.example.cloudfilestoragerestapi.util;
 
 
-import lombok.experimental.UtilityClass;
+import org.springframework.stereotype.Component;
 
-@UtilityClass
+@Component
 public class ResourceNamingUtil {
 
 
-    public static String getResourceNameWithoutPath(String resourceName) {
+    public  String getFileNameWithoutPath(String resourceName) {
         int startIndex = 0;
         for (int i = 0; i <  resourceName.length(); i++) {
             if(i== resourceName.length()-1){
                 break;
             }
+
             if ( resourceName.charAt(i) == '/') {
                 startIndex = i;
             }
@@ -21,7 +22,7 @@ public class ResourceNamingUtil {
     }
 
 
-    public static String getResourceTypeByName(String resourceName) {
+    public  String getResourceTypeByName(String resourceName) {
         if (resourceName.endsWith("/")) {
             return "DIRECTORY";
         }
@@ -30,7 +31,7 @@ public class ResourceNamingUtil {
         }
     }
 
-    public static String getResourcePathWithoutName(String resourceName) {
+    public  String getFilePathWithoutName(String resourceName) {
         int startIndex = 0;
 
         for (int i = 0; i < resourceName.length(); i++) {
@@ -41,18 +42,23 @@ public class ResourceNamingUtil {
         return resourceName.substring(0,startIndex + 1);
     }
 
-    public static String getUserRootFolder(int userId) {
+    public String getUserRootFolder(int userId) {
         return "user-" + userId + "-files/";
     }
 
 
-    public static String getFilePathInDirectory(String fullPathToFile, String pathToDirectory) {
-        String dirName = getResourceNameWithoutPath(pathToDirectory);
+    public  String getFilePathInDirectory(String fullPathToFile, String pathToDirectory,boolean withDirectoryName) {
+        String dirName = getDirectoryNameWithoutPath(pathToDirectory);
         int startIndex = fullPathToFile.indexOf(dirName);
-        return fullPathToFile.substring(startIndex);
+        if (withDirectoryName) {
+            return fullPathToFile.substring(startIndex);
+        }else {
+            return getResourcePathWithoutRootFolder(fullPathToFile.substring(startIndex));
+        }
     }
 
-    public static String getResourcePathWithoutRootFolder(String fullPathToFile) {
+
+    public  String getResourcePathWithoutRootFolder(String fullPathToFile) {
         for (int i = 0; i < fullPathToFile.length()-1; i++) {
             if (fullPathToFile.charAt(i) == '/') {
                 return fullPathToFile.substring(i+1);
@@ -61,10 +67,25 @@ public class ResourceNamingUtil {
         return fullPathToFile;
     }
 
-    public static String getFilePathInDirectory2(String fullPathToFile, String pathToDirectory) {
-        String dirName = getResourceNameWithoutPath(pathToDirectory);
-        int startIndex = fullPathToFile.indexOf(dirName);
-        return fullPathToFile.substring(startIndex-1);
+
+
+
+    public String getDirectoryPathWithoutName(String fullPathToDirectory) {
+        int lastIndex = fullPathToDirectory.lastIndexOf('/');
+        int secondLastIndex = fullPathToDirectory.lastIndexOf('/', lastIndex - 1);
+        return fullPathToDirectory.substring(0,secondLastIndex+1);
+    }
+
+
+    public  String getDirectoryNameWithoutPath(String fullPathToDirectory) {
+        int lastIndex = fullPathToDirectory.lastIndexOf('/');
+        int secondLastIndex = fullPathToDirectory.lastIndexOf('/', lastIndex - 1);
+        return fullPathToDirectory.substring(secondLastIndex+1);
+    }
+
+    public  boolean isRootDirectory(String fullPathToFile) {
+        String[] parts = fullPathToFile.split("/");
+        return parts.length <= 1;
     }
 
 }

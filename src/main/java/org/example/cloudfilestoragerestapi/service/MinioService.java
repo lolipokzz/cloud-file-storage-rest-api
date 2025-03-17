@@ -2,29 +2,29 @@ package org.example.cloudfilestoragerestapi.service;
 
 
 import io.minio.*;
-import io.minio.errors.*;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudfilestoragerestapi.exception.ResourceNotFoundException;
+import org.example.cloudfilestoragerestapi.util.ItemUtil;
+import org.example.cloudfilestoragerestapi.util.ResourceNamingUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
-import static org.example.cloudfilestoragerestapi.util.ItemUtil.getItemsFromResult;
-import static org.example.cloudfilestoragerestapi.util.ResourceNamingUtil.getUserRootFolder;
 
 @Service
 @RequiredArgsConstructor
 public class MinioService {
 
     private final MinioClient minioClient;
+
+    private final ItemUtil itemUtil;
+
+    private final ResourceNamingUtil resourceNamingUtil;
 
     @Value("${BUCKET_NAME}")
     private String bucketName;
@@ -38,10 +38,10 @@ public class MinioService {
         Iterable<Result<Item>> results = minioClient.listObjects(
                 ListObjectsArgs.builder()
                         .bucket(bucketName)
-                        .prefix(getUserRootFolder(userId) + path)
+                        .prefix(resourceNamingUtil.getUserRootFolder(userId) + path)
                         .build()
         );
-        return getItemsFromResult(results);
+        return itemUtil.getItemsFromResult(results);
     }
 
 
@@ -49,53 +49,53 @@ public class MinioService {
         Iterable<Result<Item>> results = minioClient.listObjects(
                 ListObjectsArgs.builder()
                         .bucket(bucketName)
-                        .prefix(getUserRootFolder(userId) + path)
+                        .prefix(resourceNamingUtil.getUserRootFolder(userId) + path)
                         .recursive(true)
                         .build()
         );
-        return getItemsFromResult(results);
+        return itemUtil.getItemsFromResult(results);
     }
 
 
-    public InputStream getObject(String path){
+    public InputStream getObject(String path) {
         try {
             return minioClient.getObject(GetObjectArgs.builder()
                     .bucket(bucketName)
                     .object(path)
                     .build());
-        }catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
 
-    public void removeObject(String path){
-        try{
+    public void removeObject(String path) {
+        String fullPath = getObjectStat(path).object();
+        try {
             minioClient.removeObject(RemoveObjectArgs.builder()
                     .bucket(bucketName)
-                    .object(path)
+                    .object(fullPath)
                     .build());
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new ResourceNotFoundException("Resource not found");
         }
     }
 
 
-    public StatObjectResponse getObjectStat(String path){
+    public StatObjectResponse getObjectStat(String path) {
         try {
-            return  minioClient.statObject(StatObjectArgs.builder()
+            return minioClient.statObject(StatObjectArgs.builder()
                     .bucket(bucketName)
                     .object(path)
                     .build());
-        }catch (Exception e) {
+        } catch (Exception e) {
 
             throw new ResourceNotFoundException("Resource not found");
         }
     }
 
 
-
-    public void putEmptyObject(String path){
+    public void putEmptyObject(String path) {
         try {
             minioClient.putObject(
                     PutObjectArgs.builder()
@@ -103,12 +103,12 @@ public class MinioService {
                             .object(path + emptyFile)
                             .stream(new ByteArrayInputStream(new byte[0]), 0, -1)
                             .build());
-        }catch (Exception e) {
+        } catch (Exception e) {
             throw new ResourceNotFoundException("Resource not found");
         }
     }
 
-    public void copyObject(String sourcePath, String targetPath){
+    public void copyObject(String sourcePath, String targetPath) {
         try {
             minioClient.copyObject(
                     CopyObjectArgs.builder()
@@ -121,15 +121,15 @@ public class MinioService {
                                             .build())
                             .build());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new ResourceNotFoundException("Resource not found");
         }
     }
 
-    public void putObject(String path, int userId, MultipartFile file){
+    public void putObject(String path, int userId, MultipartFile file) {
         try {
             minioClient.putObject(PutObjectArgs.builder()
                     .bucket(bucketName)
-                    .object(getUserRootFolder(userId)+ path)
+                    .object(resourceNamingUtil.getUserRootFolder(userId) + path)
                     .stream(file.getInputStream(), file.getSize(), -1)
                     .build());
 
