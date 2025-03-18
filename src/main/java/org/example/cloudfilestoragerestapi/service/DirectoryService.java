@@ -130,13 +130,25 @@ public class DirectoryService {
 
     public ResourceResponseDto moveDirectory(int userId, String fromPath, String toPath) {
 
-        String directoryName = resourceNamingUtil.getDirectoryNameWithoutPath(fromPath);
-        List<ResourceResponseDto> directoryResources = getDirectoryResources(resourceNamingUtil.getDirectoryPathWithoutName(toPath), userId);
-        for (ResourceResponseDto resource : directoryResources) {
-            if(resource.getName().equals(directoryName)) {
-                throw new ResourceAlreadyExists("Directory already exists");
+
+        if (!resourceNamingUtil.getDirectoryPathWithoutName(fromPath).equals(resourceNamingUtil.getDirectoryPathWithoutName(toPath))) {
+            String directoryName = resourceNamingUtil.getDirectoryNameWithoutPath(fromPath);
+            List<ResourceResponseDto> directoryResources = getDirectoryResources(resourceNamingUtil.getDirectoryPathWithoutName(toPath), userId);
+            for (ResourceResponseDto resource : directoryResources) {
+                if(resource.getName().equals(directoryName)) {
+                    throw new ResourceAlreadyExists("Directory already exists");
+                }
+            }
+        }else {
+            String directoryName = resourceNamingUtil.getDirectoryNameWithoutPath(toPath);
+            List<ResourceResponseDto> directoryResources = getDirectoryResources(resourceNamingUtil.getDirectoryPathWithoutName(toPath), userId);
+            for (ResourceResponseDto resource : directoryResources) {
+                if(resource.getName().equals(directoryName)) {
+                    throw new ResourceAlreadyExists("Directory already exists");
+                }
             }
         }
+
 
         List<Item> allFiles = minioService.getItemsFromMinioRecursively(userId, fromPath);
         for (Item item : allFiles) {
