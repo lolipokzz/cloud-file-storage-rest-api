@@ -87,7 +87,7 @@ public class ResourceController {
     public ResponseEntity<List<ResourceResponseDto>> findResources(@RequestParam("query") String query, @AuthenticationPrincipal UserDetailsImpl userDetails) {
         String decodedQuery = URLDecoder.decode(query, StandardCharsets.UTF_8);
         int userId = userDetails.getUser().getId();
-        List<ResourceResponseDto> resourceResponseDtos = resourceService.getResourceList(userId, decodedQuery);
+        List<ResourceResponseDto> resourceResponseDtos = resourceService.findResources(userId, decodedQuery);
         return ResponseEntity.status(200).body(resourceResponseDtos);
     }
 

@@ -35,12 +35,21 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
 
     @PostMapping("/sign-up")
-    public ResponseEntity<?> signUp(@RequestBody @Valid NewUserRequestDto newUserRequestDto, BindingResult bindingResult) {
+    public ResponseEntity<?> signUp(@RequestBody @Valid NewUserRequestDto newUserRequestDto, BindingResult bindingResult, HttpSession session) {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.status(400).body(MessageResponseDto.builder().message(Objects.requireNonNull(bindingResult.getFieldError()).getDefaultMessage()).build());
         }
 
         UserResponseDto userResponseDto = authService.saveNewUser(newUserRequestDto);
+
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(newUserRequestDto.getUsername(), newUserRequestDto.getPassword()));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+
+        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext);
+
 
         return ResponseEntity.ok(userResponseDto);
     }

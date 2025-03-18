@@ -23,9 +23,9 @@ public class AuthService {
     @Transactional
     public UserResponseDto saveNewUser(NewUserRequestDto newUserRequestDto) {
 
-        newUserRequestDto.setPassword(passwordEncoder.encode(newUserRequestDto.getPassword()));
 
-        User user = User.builder().login(newUserRequestDto.getUsername()).password(newUserRequestDto.getPassword()).build();
+        String password = passwordEncoder.encode(newUserRequestDto.getPassword());
+        User user = User.builder().login(newUserRequestDto.getUsername()).password(password).build();
 
         try {
             userRepository.save(user);

@@ -3,14 +3,14 @@ package org.example.cloudfilestoragerestapi.util;
 
 import io.minio.Result;
 import io.minio.messages.Item;
-import lombok.experimental.UtilityClass;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@UtilityClass
+@Component
 public class ItemUtil {
-    public static List<Item> getItemsFromResult(Iterable<Result<Item>> results) {
+    public List<Item> getItemsFromResult(Iterable<Result<Item>> results) {
         List<Item> items = new ArrayList<>();
         for (Result<Item> result : results) {
             try {

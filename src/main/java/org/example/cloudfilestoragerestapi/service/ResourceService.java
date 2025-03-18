@@ -62,19 +62,12 @@ public class ResourceService {
         }
     }
 
-    public List<ResourceResponseDto> getResourceList(int userId, String query) {
+    public List<ResourceResponseDto> findResources(int userId, String query) {
         List<Item> allFiles = minioService.getItemsFromMinioRecursively(userId, "");
         List<ResourceResponseDto> resources = new ArrayList<>();
         for (Item item : allFiles) {
-            String pathWithoutRootDirectory = resourceNamingUtil.getResourcePathWithoutRootFolder(item.objectName());
-            String[] allResources = pathWithoutRootDirectory.split("/");
-            for (int i = 0; i < allResources.length; i++) {
-                if (allResources[i].contains(query) && !allResources[i].contains("/")) {
-                    if (i == allResources.length - 1) {
-                        resources.add(fileService.getFileInfo(userId, pathWithoutRootDirectory));
-                    }
-
-                }
+            if (item.objectName().contains(query)) {
+                resources.add(getResourceByPath(userId, resourceNamingUtil.getResourcePathWithoutRootFolder(item.objectName())));
             }
         }
         return resources;

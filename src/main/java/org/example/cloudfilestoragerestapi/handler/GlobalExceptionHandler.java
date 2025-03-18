@@ -57,9 +57,9 @@ public class GlobalExceptionHandler {
     }
 
 
-/*    @ExceptionHandler(Exception.class)
-    public ResponseEntity<MessageResponseDto> handleException(Exception e) {
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<MessageResponseDto> handleException() {
         MessageResponseDto errorResponseDto = MessageResponseDto.builder().message("Unexpected error").build();
         return ResponseEntity.status(500).body(errorResponseDto);
-    }*/
+    }
 }
