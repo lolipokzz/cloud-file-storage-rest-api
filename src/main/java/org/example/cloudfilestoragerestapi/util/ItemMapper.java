@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class ItemUtil {
+public class ItemMapper {
     public List<Item> getItemsFromResult(Iterable<Result<Item>> results) {
         List<Item> items = new ArrayList<>();
         for (Result<Item> result : results) {
