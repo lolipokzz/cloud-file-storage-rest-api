@@ -10,5 +10,5 @@ import lombok.Setter;
 @Builder
 public class UserResponseDto {
 
-    String username;
+    private String username;
 }
