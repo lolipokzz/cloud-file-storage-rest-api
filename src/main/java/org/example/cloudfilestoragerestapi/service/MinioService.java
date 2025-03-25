@@ -5,6 +5,7 @@ import io.minio.*;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudfilestoragerestapi.exception.ResourceNotFoundException;
+import org.example.cloudfilestoragerestapi.exception.UploadException;
 import org.example.cloudfilestoragerestapi.util.ItemUtil;
 import org.example.cloudfilestoragerestapi.util.ResourceNamingUtil;
 import org.springframework.beans.factory.annotation.Value;
@@ -64,7 +65,7 @@ public class MinioService {
                     .object(path)
                     .build());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new ResourceNotFoundException("Resource not found");
         }
     }
 
@@ -137,7 +138,7 @@ public class MinioService {
                     .build());
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new UploadException("Something went wrong");
         }
     }
 
