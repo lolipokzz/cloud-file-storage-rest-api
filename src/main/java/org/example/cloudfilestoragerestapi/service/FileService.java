@@ -20,7 +20,7 @@ public class FileService {
     private final ResourceNamingUtil resourceNamingUtil;
 
 
-    public void deleteFile(int userId, String path) {
+    public void delete(int userId, String path) {
         if (path.contains("/")) {
             String pathToFile = resourceNamingUtil.getFilePathWithoutName(path);
             minioService.putEmptyObject(resourceNamingUtil.getUserRootFolder(userId) + pathToFile);
@@ -45,7 +45,7 @@ public class FileService {
     }
 
 
-    public ResourceResponseDto moveFile(int userId, String fromPath, String toPath) {
+    public ResourceResponseDto move(int userId, String fromPath, String toPath) {
         List<Item> items = minioService.getItemsFromMinio(userId, toPath);
         for (Item item : items) {
             if (resourceNamingUtil.getFileNameWithoutPath(item.objectName()).equals(resourceNamingUtil.getFileNameWithoutPath(toPath))) {
@@ -57,7 +57,7 @@ public class FileService {
         String fullToPath = resourceNamingUtil.getUserRootFolder(userId) + toPath;
 
         minioService.copyObject(fullFromPath, fullToPath);
-        deleteFile(userId, fromPath);
+        delete(userId, fromPath);
         long objectSize = minioService.getObjectSize(resourceNamingUtil.getUserRootFolder(userId) + toPath);
         return ResourceResponseDto.builder()
                 .path(toPath)

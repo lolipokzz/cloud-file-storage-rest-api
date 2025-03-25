@@ -37,9 +37,9 @@ public class ResourceService {
     public void deleteResource(int userId, String path) {
         String resourceType = resourceNamingUtil.getResourceTypeByName(path);
         if (resourceType.equals("FILE")) {
-            fileService.deleteFile(userId, path);
+            fileService.delete(userId, path);
         } else {
-            directoryService.deleteDirectory(userId, path);
+            directoryService.delete(userId, path);
         }
     }
 
@@ -56,9 +56,9 @@ public class ResourceService {
     public ResourceResponseDto moveResource(int userId, String fromPath, String toPath) {
         String resourceType = resourceNamingUtil.getResourceTypeByName(toPath);
         if (resourceType.equals("FILE")) {
-            return fileService.moveFile(userId, fromPath, toPath);
+            return fileService.move(userId, fromPath, toPath);
         } else {
-            return directoryService.moveDirectory(userId, fromPath, toPath);
+            return directoryService.move(userId, fromPath, toPath);
         }
     }
 

@@ -8,6 +8,10 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+
+import java.util.Objects;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -18,10 +22,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(409).body(messageResponseDto);
     }
 
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<MessageResponseDto> handleMethodArgumentNotValidException() {
-        MessageResponseDto messageResponseDto = MessageResponseDto.builder().message("Validation error").build();
+    public ResponseEntity<MessageResponseDto> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        String message = Objects.requireNonNull(e.getBindingResult().getFieldError()).getDefaultMessage();
+        MessageResponseDto messageResponseDto = MessageResponseDto.builder().message(message).build();
         return ResponseEntity.status(400).body(messageResponseDto);
     }
 
@@ -54,6 +58,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UploadException.class)
     public ResponseEntity<MessageResponseDto> handleUploadException(UploadException e) {
         return ResponseEntity.status(400).body(MessageResponseDto.builder().message(e.getMessage()).build());
+    }
+
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<MessageResponseDto> handleMaxUploadSizeExceededException() {
+        return ResponseEntity.status(400).body(MessageResponseDto.builder().message("Resource is too big").build());
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<MessageResponseDto> handleMethodValidationException() {
+        return ResponseEntity.status(400).body(MessageResponseDto.builder().message("Incorrect path").build());
     }
 
 

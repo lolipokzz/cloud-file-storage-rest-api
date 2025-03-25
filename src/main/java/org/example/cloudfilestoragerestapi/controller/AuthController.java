@@ -6,7 +6,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudfilestoragerestapi.dto.request.NewUserRequestDto;
 import org.example.cloudfilestoragerestapi.dto.request.UserLoginRequestDto;
-import org.example.cloudfilestoragerestapi.dto.response.MessageResponseDto;
 import org.example.cloudfilestoragerestapi.dto.response.UserResponseDto;
 import org.example.cloudfilestoragerestapi.security.UserDetailsImpl;
 import org.example.cloudfilestoragerestapi.service.AuthService;
@@ -17,13 +16,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -35,10 +31,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
 
     @PostMapping("/sign-up")
-    public ResponseEntity<?> signUp(@RequestBody @Valid NewUserRequestDto newUserRequestDto, BindingResult bindingResult, HttpSession session) {
-        if (bindingResult.hasErrors()) {
-            return ResponseEntity.status(400).body(MessageResponseDto.builder().message(Objects.requireNonNull(bindingResult.getFieldError()).getDefaultMessage()).build());
-        }
+    public ResponseEntity<UserResponseDto> signUp(@RequestBody @Valid NewUserRequestDto newUserRequestDto, HttpSession session) {
 
         UserResponseDto userResponseDto = authService.saveNewUser(newUserRequestDto);
 
@@ -50,13 +43,12 @@ public class AuthController {
 
         session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext);
 
-
-        return ResponseEntity.ok(userResponseDto);
+        return ResponseEntity.status(201).body(userResponseDto);
     }
 
 
     @PostMapping("/sign-in")
-    public ResponseEntity<?> signIn(@RequestBody @Valid UserLoginRequestDto userLoginRequestDto, HttpSession session) {
+    public ResponseEntity<UserResponseDto> signIn(@RequestBody @Valid UserLoginRequestDto userLoginRequestDto, HttpSession session) {
 
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userLoginRequestDto.getUsername(), userLoginRequestDto.getPassword()));
 

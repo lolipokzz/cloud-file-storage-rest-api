@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -45,27 +46,20 @@ public class DirectoryService {
                 continue;
             }
 
-            if (item.isDir()) {
-                resourceResponseDtos.add(ResourceResponseDto.builder()
-                        .name(resourceNamingUtil.getFileNameWithoutPath(item.objectName()))
-                        .path(path)
-                        .size(item.size())
-                        .type("DIRECTORY")
-                        .build());
-            } else {
-                resourceResponseDtos.add(ResourceResponseDto.builder()
-                        .name(resourceNamingUtil.getFileNameWithoutPath(item.objectName()))
-                        .path(path)
-                        .size(item.size())
-                        .type("FILE")
-                        .build());
-            }
+            String nameWithoutPath = resourceNamingUtil.getFileNameWithoutPath(item.objectName());
+
+            resourceResponseDtos.add(ResourceResponseDto.builder()
+                    .name(nameWithoutPath)
+                    .path(path)
+                    .size(item.size())
+                    .type(item.isDir() ? "DIRECTORY" : "FILE")
+                    .build());
         }
         return resourceResponseDtos;
     }
 
 
-    public void deleteDirectory(int userId, String path) {
+    public void delete(int userId, String path) {
         List<Item> allFiles = minioService.getItemsFromMinioRecursively(userId, path);
 
         if (allFiles.isEmpty()) {
@@ -105,7 +99,7 @@ public class DirectoryService {
 
             for (Item item : allFiles) {
 
-                String pathInDir = resourceNamingUtil.getFilePathInDirectory(item.objectName(), path,true);
+                String pathInDir = resourceNamingUtil.getFilePathInDirectory(item.objectName(), path, true);
 
 
                 try (InputStream inputStream = minioService.getObject(item.objectName())) {
@@ -128,31 +122,29 @@ public class DirectoryService {
     }
 
 
-    public ResourceResponseDto moveDirectory(int userId, String fromPath, String toPath) {
+    public ResourceResponseDto move(int userId, String fromPath, String toPath) {
 
+        String toPathWithoutName = resourceNamingUtil.getDirectoryPathWithoutName(toPath);
+        String fromPathWithoutName = resourceNamingUtil.getDirectoryPathWithoutName(fromPath);
+        String directoryName;
 
-        if (!resourceNamingUtil.getDirectoryPathWithoutName(fromPath).equals(resourceNamingUtil.getDirectoryPathWithoutName(toPath))) {
-            String directoryName = resourceNamingUtil.getDirectoryNameWithoutPath(fromPath);
-            List<ResourceResponseDto> directoryResources = getDirectoryResources(resourceNamingUtil.getDirectoryPathWithoutName(toPath), userId);
-            for (ResourceResponseDto resource : directoryResources) {
-                if(resource.getName().equals(directoryName)) {
-                    throw new ResourceAlreadyExists("Directory already exists");
-                }
-            }
-        }else {
-            String directoryName = resourceNamingUtil.getDirectoryNameWithoutPath(toPath);
-            List<ResourceResponseDto> directoryResources = getDirectoryResources(resourceNamingUtil.getDirectoryPathWithoutName(toPath), userId);
-            for (ResourceResponseDto resource : directoryResources) {
-                if(resource.getName().equals(directoryName)) {
-                    throw new ResourceAlreadyExists("Directory already exists");
-                }
+        if (!Objects.equals(fromPathWithoutName, toPathWithoutName)) {
+            directoryName = resourceNamingUtil.getDirectoryNameWithoutPath(fromPath);
+        } else {
+            directoryName = resourceNamingUtil.getDirectoryNameWithoutPath(toPath);
+        }
+
+        List<ResourceResponseDto> directoryResources = getDirectoryResources(toPathWithoutName, userId);
+        for (ResourceResponseDto resource : directoryResources) {
+            if (resource.getName().equals(directoryName)) {
+                throw new ResourceAlreadyExists("Directory already exists");
             }
         }
 
 
         List<Item> allFiles = minioService.getItemsFromMinioRecursively(userId, fromPath);
         for (Item item : allFiles) {
-            String fileInDir = resourceNamingUtil.getFilePathInDirectory(item.objectName(), fromPath,false);
+            String fileInDir = resourceNamingUtil.getFilePathInDirectory(item.objectName(), fromPath, false);
             String targetPath = resourceNamingUtil.getUserRootFolder(userId) + toPath + fileInDir;
             minioService.copyObject(item.objectName(), targetPath);
             minioService.removeObject(item.objectName());
@@ -167,7 +159,7 @@ public class DirectoryService {
     }
 
 
-    public ResourceResponseDto createDirectory(int userId, String path) {
+    public ResourceResponseDto create(int userId, String path) {
 
         if (!resourceNamingUtil.isRootDirectory(path)) {
             List<Item> allFiles = minioService.getItemsFromMinio(userId, resourceNamingUtil.getDirectoryPathWithoutName(path));
