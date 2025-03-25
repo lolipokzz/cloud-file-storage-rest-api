@@ -1,7 +1,6 @@
 package org.example.cloudfilestoragerestapi.service;
 
 
-import io.minio.StatObjectResponse;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudfilestoragerestapi.dto.response.ResourceResponseDto;
@@ -23,7 +22,7 @@ public class FileService {
 
     public void deleteFile(int userId, String path) {
         if (path.contains("/")) {
-            String pathToFile =resourceNamingUtil.getFilePathWithoutName(path);
+            String pathToFile = resourceNamingUtil.getFilePathWithoutName(path);
             minioService.putEmptyObject(resourceNamingUtil.getUserRootFolder(userId) + pathToFile);
         }
         minioService.removeObject(resourceNamingUtil.getUserRootFolder(userId) + path);
@@ -31,24 +30,13 @@ public class FileService {
     }
 
     public ResourceResponseDto getFileInfo(int userId, String path) {
-        StatObjectResponse objectStat = minioService.getObjectStat(resourceNamingUtil.getUserRootFolder(userId) + path);
-
-        if (path.contains("/")) {
-            return ResourceResponseDto.builder()
-                    .name(resourceNamingUtil.getFileNameWithoutPath(path))
-                    .size(objectStat.size())
-                    .path(resourceNamingUtil.getFilePathWithoutName(path))
-                    .type("FILE")
-                    .build();
-
-        }else {
-            return ResourceResponseDto.builder()
-                    .name(path)
-                    .size(objectStat.size())
-                    .path("")
-                    .type("FILE")
-                    .build();
-        }
+        long objectSize = minioService.getObjectSize(resourceNamingUtil.getUserRootFolder(userId) + path);
+        return ResourceResponseDto.builder()
+                .name(path.contains("/") ? resourceNamingUtil.getFileNameWithoutPath(path) : path)
+                .size(objectSize)
+                .path(path.contains("/") ? resourceNamingUtil.getFilePathWithoutName(path) : "")
+                .type("FILE")
+                .build();
     }
 
 
@@ -65,15 +53,17 @@ public class FileService {
             }
         }
 
+        String fullFromPath = resourceNamingUtil.getUserRootFolder(userId) + fromPath;
+        String fullToPath = resourceNamingUtil.getUserRootFolder(userId) + toPath;
 
-        minioService.copyObject(resourceNamingUtil.getUserRootFolder(userId) + fromPath, resourceNamingUtil.getUserRootFolder(userId) + toPath);
+        minioService.copyObject(fullFromPath, fullToPath);
         deleteFile(userId, fromPath);
-        StatObjectResponse objectStat = minioService.getObjectStat(resourceNamingUtil.getUserRootFolder(userId) + toPath);
+        long objectSize = minioService.getObjectSize(resourceNamingUtil.getUserRootFolder(userId) + toPath);
         return ResourceResponseDto.builder()
                 .path(toPath)
                 .name(resourceNamingUtil.getFileNameWithoutPath(fromPath))
                 .type("FILE")
-                .size(objectStat.size())
+                .size(objectSize)
                 .build();
     }
 

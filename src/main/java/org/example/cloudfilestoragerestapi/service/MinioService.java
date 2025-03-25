@@ -70,11 +70,10 @@ public class MinioService {
 
 
     public void removeObject(String path) {
-        String fullPath = getObjectStat(path).object();
         try {
             minioClient.removeObject(RemoveObjectArgs.builder()
                     .bucket(bucketName)
-                    .object(fullPath)
+                    .object(path)
                     .build());
         } catch (Exception e) {
             throw new ResourceNotFoundException("Resource not found");
@@ -82,12 +81,15 @@ public class MinioService {
     }
 
 
-    public StatObjectResponse getObjectStat(String path) {
+    public long getObjectSize(String path) {
         try {
-            return minioClient.statObject(StatObjectArgs.builder()
+            StatObjectResponse objectResponse = minioClient.statObject(StatObjectArgs.builder()
                     .bucket(bucketName)
+
                     .object(path)
                     .build());
+
+            return  objectResponse.size();
         } catch (Exception e) {
 
             throw new ResourceNotFoundException("Resource not found");
@@ -124,6 +126,7 @@ public class MinioService {
             throw new ResourceNotFoundException("Resource not found");
         }
     }
+
 
     public void putObject(String path, int userId, MultipartFile file) {
         try {
