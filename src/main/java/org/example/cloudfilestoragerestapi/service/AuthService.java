@@ -7,6 +7,8 @@ import org.example.cloudfilestoragerestapi.dto.response.UserResponseDto;
 import org.example.cloudfilestoragerestapi.entity.User;
 import org.example.cloudfilestoragerestapi.exception.UserAlreadyExistsException;
 import org.example.cloudfilestoragerestapi.repository.UserRepository;
+import org.example.cloudfilestoragerestapi.security.UserDetailsImpl;
+import org.example.cloudfilestoragerestapi.util.ResourceNamingUtil;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,12 @@ public class AuthService {
 
     private final PasswordEncoder passwordEncoder;
 
+    private final MinioService minioService;
+
+    private final ResourceNamingUtil resourceNamingUtil;
+
+    private final UserDetailsService userDetailsService;
+
     @Transactional
     public UserResponseDto saveNewUser(NewUserRequestDto newUserRequestDto) {
 
@@ -29,6 +37,11 @@ public class AuthService {
 
         try {
             userRepository.save(user);
+            UserDetailsImpl userDetails =(UserDetailsImpl) userDetailsService.loadUserByUsername(user.getLogin());
+            String rootFolder = resourceNamingUtil.getUserRootFolder(userDetails.getUser().getId());
+            minioService.putEmptyObject(rootFolder);
+
+
         } catch (DataIntegrityViolationException e) {
             throw new UserAlreadyExistsException("User already exists");
         }

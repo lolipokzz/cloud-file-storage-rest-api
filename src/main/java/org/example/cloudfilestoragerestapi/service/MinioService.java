@@ -6,7 +6,7 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudfilestoragerestapi.exception.ResourceNotFoundException;
 import org.example.cloudfilestoragerestapi.exception.UploadException;
-import org.example.cloudfilestoragerestapi.util.ItemUtil;
+import org.example.cloudfilestoragerestapi.util.ItemMapper;
 import org.example.cloudfilestoragerestapi.util.ResourceNamingUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,7 +23,7 @@ public class MinioService {
 
     private final MinioClient minioClient;
 
-    private final ItemUtil itemUtil;
+    private final ItemMapper itemMapper;
 
     private final ResourceNamingUtil resourceNamingUtil;
 
@@ -42,7 +42,7 @@ public class MinioService {
                         .prefix(resourceNamingUtil.getUserRootFolder(userId) + path)
                         .build()
         );
-        return itemUtil.getItemsFromResult(results);
+        return itemMapper.getItemsFromResult(results);
     }
 
 
@@ -54,7 +54,7 @@ public class MinioService {
                         .recursive(true)
                         .build()
         );
-        return itemUtil.getItemsFromResult(results);
+        return itemMapper.getItemsFromResult(results);
     }
 
 
